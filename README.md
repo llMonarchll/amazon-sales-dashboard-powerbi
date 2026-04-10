@@ -189,6 +189,11 @@ FROM revenue_calc;
 ## 📊 Dashboard Preview
 
 ![Dashboard](assets/Dashboard.png)
+
+## 🎥 Dashboard Demo
+![Demo](assets/dashboard_demo.gif)
+
+
 ## 📈 Key Insights & Results
 
 * **Western Dress** is the fastest-growing category (~116%), indicating strong expansion potential.
@@ -208,14 +213,15 @@ data/
 ├── processed/
 │   └── Amazon_Sale_Report.processed.csv
 │
-├── dashboard/
-│   └── amazon_dashboard.pbix
+├── powerbi/
+│   └── amazon_sales_dashboard.pbix
 │
 ├── sql/
 │   └── sql_queries.sql
 │
 ├── assets/
-│   └── Dashboardpng
+│   ├── dashboard.png
+│   └── dashboard_demo.gif
 │
 └── README.md
 ```
@@ -262,8 +268,10 @@ This project demonstrates the ability to:
 
 ## 🔗 Live Dashboard
 
-> 📊 Interactive dashboard available in PBIX file (download and open in Power BI Desktop)
+## 📂 Power BI File
 
+Download the dashboard here:  
+[Power BI Dashboard](powerbi/Amazon_sales_dashboard.pbix)
 ---
 
 ## 👤 Author
