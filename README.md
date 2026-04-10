@@ -94,7 +94,101 @@ The goal of this project is to answer key business questions such as:
   * Insight summary for decision-making
 
 ---
+## 🧠 Key SQL Queries
 
+### 🔹 1. Revenue Contribution by Category
+```sql
+SELECT 
+    category,
+    SUM(Qty * Amount) AS total_revenue,
+    ROUND(
+        SUM(Qty * Amount) * 1.0 / SUM(SUM(Qty * Amount)) OVER(), 
+        2
+    ) AS revenue_contribution
+FROM amazon_report
+GROUP BY category
+ORDER BY total_revenue DESC;
+```
+### 🔹 2. State-wise Revenue (Shipped Orders Only)
+```sql
+SELECT 
+    state,
+    SUM(Qty * Amount) AS total_revenue
+FROM amazon_report
+WHERE status LIKE 'Ship%'
+GROUP BY state
+ORDER BY total_revenue DESC;
+```
+### 🔹 3. Fulfillment-wise Revenue Breakdown
+```sql
+SELECT 
+    state,
+    SUM(Qty * Amount) AS total_revenue,
+    SUM(CASE WHEN Fulfilment = 'Amazon' THEN Qty * Amount ELSE 0 END) AS amazon_revenue,
+    SUM(CASE WHEN Fulfilment = 'Merchant' THEN Qty * Amount ELSE 0 END) AS merchant_revenue
+FROM amazon_report
+WHERE status LIKE 'Ship%'
+GROUP BY state
+ORDER BY total_revenue DESC;
+```
+### 🔹 4. Quarterly Revenue Analysis
+```sql
+SELECT 
+    QUARTER(order_date) AS quarter,
+    SUM(Qty * Amount) AS revenue
+FROM amazon_report
+GROUP BY QUARTER(order_date)
+ORDER BY quarter;
+```
+### 🔹 5. Month-over-Month (MoM) Growth Analysis
+```sql
+SELECT 
+    current_month,
+    monthly_revenue,
+    LAG(monthly_revenue) OVER (ORDER BY current_month) AS previous_month_revenue,
+    ROUND(
+        (monthly_revenue - LAG(monthly_revenue) OVER (ORDER BY current_month)) * 1.0 
+        / LAG(monthly_revenue) OVER (ORDER BY current_month), 
+        3
+    ) AS mom_growth
+FROM (
+    SELECT 
+        DATE_FORMAT(order_date, '%Y-%m-01') AS current_month,
+        SUM(Qty * Amount) AS monthly_revenue
+    FROM amazon_report
+    GROUP BY DATE_FORMAT(order_date, '%Y-%m-01')
+) t;
+```
+### 🔹 6. Category Growth (First vs Last Date)
+```sql
+WITH first_last AS (
+    SELECT 
+        category,
+        MIN(order_date) AS first_date,
+        MAX(order_date) AS last_date
+    FROM amazon_report
+    GROUP BY category
+),
+revenue_calc AS (
+    SELECT 
+        s.category,
+        SUM(CASE WHEN s.order_date = f.first_date THEN s.Qty * s.Amount END) AS first_revenue,
+        SUM(CASE WHEN s.order_date = f.last_date THEN s.Qty * s.Amount END) AS last_revenue
+    FROM amazon_report s
+    JOIN first_last f 
+        ON s.category = f.category
+    GROUP BY s.category
+)
+SELECT 
+    category,
+    ROUND((last_revenue - first_revenue) * 1.0 / first_revenue, 3) AS growth_percentage
+FROM revenue_calc;
+```
+📁 Full SQL queries available here: [sql_queries.sql](./sql/sql_queries.sql)
+
+## 📊 Dashboard Preview
+
+![Dashboard](assets/Dashboard.png)
 ## 📈 Key Insights & Results
 
 * **Western Dress** is the fastest-growing category (~116%), indicating strong expansion potential.
@@ -108,18 +202,20 @@ The goal of this project is to answer key business questions such as:
 
 ```bash
 Amazon-Sales-Analysis/
-│
-├── data/
-│   └── amazon_sales.csv
+data/
+├── raw/
+│   └── Amazon Sales Report.original.xlsx
+├── processed/
+│   └── Amazon_Sale_Report.processed.csv
 │
 ├── dashboard/
 │   └── amazon_dashboard.pbix
 │
 ├── sql/
-│   └── analysis_queries.sql
+│   └── sql_queries.sql
 │
-├── images/
-│   └── dashboard_preview.png
+├── assets/
+│   └── Dashboardpng
 │
 └── README.md
 ```
@@ -128,17 +224,7 @@ Amazon-Sales-Analysis/
 
 ## 🚀 How to Run
 
-### Option 1: View Dashboard (Recommended)
-
-* Open the live dashboard via Power BI Service:
-
-```txt
-[Add your Power BI link here]
-```
-
----
-
-### Option 2: Run Locally
+### Option 1:
 
 1. Download the `.pbix` file
 2. Open using **Power BI Desktop**
@@ -146,23 +232,12 @@ Amazon-Sales-Analysis/
 
 ---
 
-### Option 3: Run SQL Analysis
+### Option 2: Run SQL Analysis
 
 1. Import dataset into your SQL environment
-2. Execute queries from:
+2. 📁 Full SQL queries available here: [sql_queries.sql](sql/sql_queries.sql)
 
-```txt
-## SQL Analysis
 
-SQL was used to validate key metrics and perform aggregations such as:
-- Revenue contribution by category
-- Quarterly revenue trends
-- Top-performing regions
-
-See full queries in `sql_queries.sql`
-```
-
----
 
 ## 🔮 Future Work
 
